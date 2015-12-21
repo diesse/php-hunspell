@@ -255,7 +255,7 @@ PHP_METHOD(hunspell, analyze)
   else
   {
     char **slist;
-    int sl_count = Hunspell_stem(ze_obj->dic, &slist, (const char *)word);
+    int sl_count = Hunspell_analyze(ze_obj->dic, &slist, (const char *)word);
 
     if (sl_count == 0)
     {
@@ -439,9 +439,12 @@ static zend_object_value php_hunspell_object_new(zend_class_entry *class_type TS
     hobj->dic_path_len = 0;
 
     zend_object_std_init(&hobj->zo, class_type TSRMLS_CC);
+#if PHP_VERSION_ID < 50399
     zend_hash_copy(hobj->zo.properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref,
 		    (void *) &tmp, sizeof(zval *));
-
+#else
+    object_properties_init((zend_object*) &(hobj->zo), class_type);
+#endif
     retval.handle = zend_objects_store_put(hobj,
 					NULL,
 					(zend_objects_free_object_storage_t) php_hunspell_object_free_storage,
