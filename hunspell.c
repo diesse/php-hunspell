@@ -59,7 +59,7 @@ PHP_METHOD(hunspell, __construct)
     return;
   }
 
-  ze_obj = (ze_hunspell_object*) zend_object_store_get_object(getThis() TSRMLS_CC);
+  ze_obj = Z_HUNSPELL_OBJ_P(getThis());
   ze_obj->aff_path_len = aff_path_len;
   ze_obj->dic_path_len = dic_path_len;
 
@@ -76,7 +76,7 @@ PHP_METHOD(hunspell, open)
 
   if (this)
   {
-    ze_obj = (ze_hunspell_object*) zend_object_store_get_object(this TSRMLS_CC);
+    ze_obj = Z_HUNSPELL_OBJ_P(this);
   }
   if (ze_obj->dic != NULL)
   {
@@ -103,14 +103,14 @@ PHP_METHOD(hunspell, get_encoding)
 
   if (this)
   {
-    ze_obj = (ze_hunspell_object*) zend_object_store_get_object(this TSRMLS_CC);
+    ze_obj = Z_HUNSPELL_OBJ_P(this);
   }
   if (ze_obj->dic == NULL)
   {
     RETURN_FALSE;
   }
   retval = Hunspell_get_dic_encoding(ze_obj->dic);
-  RETURN_STRING(retval, 1);
+  RETURN_STRING(retval);
 }
 
 PHP_METHOD(hunspell, close)
@@ -121,7 +121,7 @@ PHP_METHOD(hunspell, close)
 
   if (this)
   {
-    ze_obj = (ze_hunspell_object*) zend_object_store_get_object(this TSRMLS_CC);
+    ze_obj = Z_HUNSPELL_OBJ_P(this);
   }
 
   if (ze_obj->dic == NULL)
@@ -147,7 +147,7 @@ PHP_METHOD(hunspell, spell)
   
   if (this)
   {
-    ze_obj = (ze_hunspell_object*) zend_object_store_get_object(this TSRMLS_CC);
+    ze_obj = Z_HUNSPELL_OBJ_P(this);
   }
 
   if (ze_obj->dic == NULL)
@@ -175,7 +175,7 @@ PHP_METHOD(hunspell, suggest)
 
   if (this)
   {
-    ze_obj = (ze_hunspell_object*) zend_object_store_get_object(this TSRMLS_CC);
+    ze_obj = Z_HUNSPELL_OBJ_P(this);
   }
   else
     RETURN_FALSE;
@@ -212,13 +212,12 @@ PHP_METHOD(hunspell, suggest)
       array_init(return_value);
       for (i = 0; i < sl_count; ++i)
       {
-        add_next_index_string(return_value, slist[i], 1);
+        add_next_index_string(return_value, slist[i]);
       }
     }
     Hunspell_free_list(ze_obj->dic, &slist, sl_count);
   }
 }
-
 
 
 PHP_METHOD(hunspell, analyze)
@@ -230,7 +229,7 @@ PHP_METHOD(hunspell, analyze)
 
   if (this)
   {
-    ze_obj = (ze_hunspell_object*) zend_object_store_get_object(this TSRMLS_CC);
+    ze_obj = Z_HUNSPELL_OBJ_P(this);
   }
   else
     RETURN_FALSE;
@@ -267,7 +266,7 @@ PHP_METHOD(hunspell, analyze)
       array_init(return_value);
       for (i = 0; i < sl_count; ++i)
       {
-        add_next_index_string(return_value, slist[i], 1);
+        add_next_index_string(return_value, slist[i]);
       }
     }
     Hunspell_free_list(ze_obj->dic, &slist, sl_count);
@@ -284,7 +283,7 @@ PHP_METHOD(hunspell, stem)
 
   if (this)
   {
-    ze_obj = (ze_hunspell_object*) zend_object_store_get_object(this TSRMLS_CC);
+    ze_obj = Z_HUNSPELL_OBJ_P(this);
   }
   else
     RETURN_FALSE;
@@ -321,7 +320,7 @@ PHP_METHOD(hunspell, stem)
       array_init(return_value);
       for (i = 0; i < sl_count; ++i)
       {
-        add_next_index_string(return_value, slist[i], 1);
+        add_next_index_string(return_value, slist[i]);
       }
     }
     Hunspell_free_list(ze_obj->dic, &slist, sl_count);
@@ -349,6 +348,13 @@ ZEND_BEGIN_ARG_INFO(arginfo_hunspell_suggest, 0)
     ZEND_ARG_INFO(0, word) /* parameter name */
 ZEND_END_ARG_INFO();
 
+ZEND_BEGIN_ARG_INFO(arginfo_hunspell_analyze, 0)
+    ZEND_ARG_INFO(0, word) /* parameter name */
+ZEND_END_ARG_INFO();
+
+ZEND_BEGIN_ARG_INFO(arginfo_hunspell_stem, 0)
+    ZEND_ARG_INFO(0, word) /* parameter name */
+ZEND_END_ARG_INFO();
 
 /* {{{ hunspell_functions[]
  */
@@ -360,7 +366,7 @@ static zend_function_entry hunspell_class_functions[] =
     PHP_ME(hunspell,	spell,		arginfo_hunspell_spell,		ZEND_ACC_PUBLIC)
     PHP_ME(hunspell,	suggest,	arginfo_hunspell_suggest,	ZEND_ACC_PUBLIC)
     PHP_ME(hunspell,	analyze,	arginfo_hunspell_suggest,	ZEND_ACC_PUBLIC)
-    PHP_ME(hunspell,	stem,	arginfo_hunspell_suggest,	ZEND_ACC_PUBLIC)
+    PHP_ME(hunspell,	stem,		arginfo_hunspell_suggest,	ZEND_ACC_PUBLIC)
     PHP_ME(hunspell,	close,		NULL,				ZEND_ACC_PUBLIC)
 
     {NULL, NULL, NULL}
@@ -404,7 +410,8 @@ static zend_class_entry *hunspell_class_entry;
 
 static void php_hunspell_object_free_storage(void *object TSRMLS_DC) /* {{{ */
 {
-  ze_hunspell_object * hobj = (ze_hunspell_object *) object;
+  //ze_hunspell_object * hobj = (ze_hunspell_object *) object;
+  ze_hunspell_object * hobj = (ze_hunspell_object *)((char *)object - XtOffsetOf(ze_hunspell_object, zo));
   if (!hobj)
     return;
 // Memory was given not the emalloc or malloc, so we don't need to free it!!!
@@ -418,19 +425,15 @@ static void php_hunspell_object_free_storage(void *object TSRMLS_DC) /* {{{ */
   if (hobj->dic != NULL)
     Hunspell_destroy(hobj->dic);
     hobj->dic = NULL;
-  efree(hobj);
+  //efree(hobj);
 
 }
 
-static zend_object_value php_hunspell_object_new(zend_class_entry *class_type TSRMLS_DC) /* {{{ */
+static zend_object * php_hunspell_object_new(zend_class_entry *class_type TSRMLS_DC) /* {{{ */
 {
-    zend_object_value retval;
-
-    ze_hunspell_object *hobj;
-    zval *tmp;
-
-    hobj = emalloc(sizeof(ze_hunspell_object));
-    memset(&hobj->zo, 0, sizeof(zend_object));
+    ze_hunspell_object *hobj = ecalloc(1,
+        sizeof(ze_hunspell_object) +
+        zend_object_properties_size(class_type));
 
     hobj->aff_path = NULL;
     hobj->dic_path = NULL;
@@ -439,20 +442,17 @@ static zend_object_value php_hunspell_object_new(zend_class_entry *class_type TS
     hobj->dic_path_len = 0;
 
     zend_object_std_init(&hobj->zo, class_type TSRMLS_CC);
-#if PHP_VERSION_ID < 50399
-    zend_hash_copy(hobj->zo.properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref,
-		    (void *) &tmp, sizeof(zval *));
-#else
-    object_properties_init((zend_object*) &(hobj->zo), class_type);
-#endif
-    retval.handle = zend_objects_store_put(hobj,
-					NULL,
-					(zend_objects_free_object_storage_t) php_hunspell_object_free_storage,
-					NULL TSRMLS_CC);
 
-    retval.handlers = &hunspell_handlers;
+    hunspell_handlers.offset = XtOffsetOf(ze_hunspell_object, zo);
+    hunspell_handlers.free_obj = (zend_object_free_obj_t)php_hunspell_object_free_storage;
 
-    return retval;
+    hobj->zo.handlers = &hunspell_handlers;
+
+    return &hobj->zo;
+}
+
+static inline ze_hunspell_object * php_hunspell_object_fetch_object(zend_object *obj) {
+    return (ze_hunspell_object *)((char *)obj - XtOffsetOf(ze_hunspell_object, zo));
 }
 
 /* {{{ PHP_MINIT_FUNCTION
