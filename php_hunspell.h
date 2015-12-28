@@ -45,14 +45,14 @@ PHP_FUNCTION(confirm_hunspell_compiled);	/* For testing, remove later. */
 typedef struct _ze_hunspell_object {
     Hunhandle *dic;
     char *aff_path;
-    int aff_path_len;
     char *dic_path;
+    int aff_path_len;
     int dic_path_len;
     zend_object zo;
 } ze_hunspell_object;
 
-static inline ze_hunspell_object * php_hunspell_object_fetch_object(zend_object *obj);
-#define Z_HUNSPELL_OBJ_P(zv) php_hunspell_object_fetch_object(Z_OBJ_P(zv));
+static inline ze_hunspell_object * php_ze_hunspell_object_fetch_object(zend_object *obj);
+#define Z_HUNSPELL_OBJ_P(zv) php_ze_hunspell_object_fetch_object(Z_OBJ_P(zv));
 
 /* 
   	Declare any global variables you may need between the BEGIN

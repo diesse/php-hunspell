@@ -29,8 +29,8 @@
 #include "php_hunspell.h"
 
 /* True global resources - no need for thread safety here */
-static int le_hunspell;
-zend_object_handlers hunspell_object_handlers;
+//static int le_hunspell;
+//zend_object_handlers hunspell_object_handlers;
 
 
 static ZEND_NAMED_FUNCTION(hunspell_open_dic)
@@ -42,10 +42,10 @@ PHP_METHOD(hunspell, __construct)
 {
   ze_hunspell_object *ze_obj = NULL;
   char *aff_path, *dic_path;
-  int aff_path_len, dic_path_len;
+  size_t aff_path_len, dic_path_len;
   Hunhandle *dic;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &dic_path, &dic_path_len, &aff_path, &aff_path_len) == FAILURE)
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "ss", &dic_path, &dic_path_len, &aff_path, &aff_path_len) == FAILURE)
   {
     return;
   }
@@ -83,7 +83,7 @@ PHP_METHOD(hunspell, open)
     Hunspell_destroy(ze_obj->dic);
   }
   
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &ze_obj->dic_path, &ze_obj->dic_path_len, &ze_obj->aff_path, &ze_obj->aff_path_len) == FAILURE)
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "ss", &ze_obj->dic_path, &ze_obj->dic_path_len, &ze_obj->aff_path, &ze_obj->aff_path_len) == FAILURE)
   {
     RETURN_FALSE;
   }
@@ -155,7 +155,7 @@ PHP_METHOD(hunspell, spell)
     RETURN_FALSE;
   }
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &word, &word_len) == FAILURE)
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &word, &word_len) == FAILURE)
   {
     RETURN_FALSE;
   }
@@ -185,7 +185,7 @@ PHP_METHOD(hunspell, suggest)
     RETURN_FALSE;
   }
   
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &word, &word_len) == FAILURE)
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &word, &word_len) == FAILURE)
   {
     RETURN_FALSE;
   }
@@ -208,7 +208,7 @@ PHP_METHOD(hunspell, suggest)
     }
     else
     {
-      // if (array_init(return_value) == FAILURE) php_error_docref(NULL TSRMLS_CC, E_ERROR, "Unable to initialize array");
+      // if (array_init(return_value) == FAILURE) php_error_docref(NULL, E_ERROR, "Unable to initialize array");
       array_init(return_value);
       for (i = 0; i < sl_count; ++i)
       {
@@ -239,7 +239,7 @@ PHP_METHOD(hunspell, analyze)
     RETURN_FALSE;
   }
   
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &word, &word_len) == FAILURE)
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &word, &word_len) == FAILURE)
   {
     RETURN_FALSE;
   }
@@ -262,7 +262,7 @@ PHP_METHOD(hunspell, analyze)
     }
     else
     {
-      // if (array_init(return_value) == FAILURE) php_error_docref(NULL TSRMLS_CC, E_ERROR, "Unable to initialize array");
+      // if (array_init(return_value) == FAILURE) php_error_docref(NULL, E_ERROR, "Unable to initialize array");
       array_init(return_value);
       for (i = 0; i < sl_count; ++i)
       {
@@ -293,7 +293,7 @@ PHP_METHOD(hunspell, stem)
     RETURN_FALSE;
   }
   
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &word, &word_len) == FAILURE)
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &word, &word_len) == FAILURE)
   {
     RETURN_FALSE;
   }
@@ -316,7 +316,7 @@ PHP_METHOD(hunspell, stem)
     }
     else
     {
-      // if (array_init(return_value) == FAILURE) php_error_docref(NULL TSRMLS_CC, E_ERROR, "Unable to initialize array");
+      // if (array_init(return_value) == FAILURE) php_error_docref(NULL, E_ERROR, "Unable to initialize array");
       array_init(return_value);
       for (i = 0; i < sl_count; ++i)
       {
@@ -365,11 +365,10 @@ static zend_function_entry hunspell_class_functions[] =
     PHP_ME(hunspell,	get_encoding,	NULL,				ZEND_ACC_PUBLIC)
     PHP_ME(hunspell,	spell,		arginfo_hunspell_spell,		ZEND_ACC_PUBLIC)
     PHP_ME(hunspell,	suggest,	arginfo_hunspell_suggest,	ZEND_ACC_PUBLIC)
-    PHP_ME(hunspell,	analyze,	arginfo_hunspell_suggest,	ZEND_ACC_PUBLIC)
-    PHP_ME(hunspell,	stem,		arginfo_hunspell_suggest,	ZEND_ACC_PUBLIC)
+    PHP_ME(hunspell,	analyze,	arginfo_hunspell_analyze,	ZEND_ACC_PUBLIC)
+    PHP_ME(hunspell,	stem,		arginfo_hunspell_stem,		ZEND_ACC_PUBLIC)
     PHP_ME(hunspell,	close,		NULL,				ZEND_ACC_PUBLIC)
-
-    {NULL, NULL, NULL}
+    PHP_FE_END
 };
 /* }}} */
 
@@ -395,9 +394,9 @@ ZEND_GET_MODULE(hunspell)
 
 /* {{{ PHP_INI
  */
-/* Remove comments and fill if you need to have entries in php.ini
+/* Remove comments and fill if you need to have entries in php.ini 
 PHP_INI_BEGIN()
-    STD_PHP_INI_ENTRY("hunspell.global_value",      "42", PHP_INI_ALL, OnUpdateLong, global_value, zend_hunspell_globals, hunspell_globals)
+/*    STD_PHP_INI_ENTRY("hunspell.global_value",      "42", PHP_INI_ALL, OnUpdateLong, global_value, zend_hunspell_globals, hunspell_globals)
     STD_PHP_INI_ENTRY("hunspell.global_string", "foobar", PHP_INI_ALL, OnUpdateString, global_string, zend_hunspell_globals, hunspell_globals)
 PHP_INI_END()
 */
@@ -408,50 +407,47 @@ static zend_object_handlers hunspell_handlers;
 static zend_class_entry *hunspell_class_entry;
 /* }}} */
 
-static void php_hunspell_object_free_storage(void *object TSRMLS_DC) /* {{{ */
+static void php_hunspell_object_free_storage(void *object ) /* {{{ */
 {
-  //ze_hunspell_object * hobj = (ze_hunspell_object *) object;
-  ze_hunspell_object * hobj = (ze_hunspell_object *)((char *)object - XtOffsetOf(ze_hunspell_object, zo));
-  if (!hobj)
+  ze_hunspell_object *intern = php_ze_hunspell_object_fetch_object(object);
+  if (!intern)
     return;
 // Memory was given not the emalloc or malloc, so we don't need to free it!!!
 /* 
-  if (hobj->aff_path != NULL)
-    efree(hobj->aff_path);
+  if (intern->aff_path != NULL)
+    efree(intern->aff_path);
     return ;
-  if (hobj->dic_path != NULL)
-    efree(hobj->dic_path);
+  if (intern->dic_path != NULL)
+    efree(intern->dic_path);
 */
-  if (hobj->dic != NULL)
-    Hunspell_destroy(hobj->dic);
-    hobj->dic = NULL;
-  //efree(hobj);
+  if (intern->dic != NULL)
+    Hunspell_destroy(intern->dic);
+    intern->dic = NULL;
 
+  zend_object_std_dtor(&intern->zo);
 }
 
-static zend_object * php_hunspell_object_new(zend_class_entry *class_type TSRMLS_DC) /* {{{ */
+static zend_object * php_ze_hunspell_object_new(zend_class_entry *ce ) /* {{{ */
 {
-    ze_hunspell_object *hobj = ecalloc(1,
+    ze_hunspell_object *intern = ecalloc(1,
         sizeof(ze_hunspell_object) +
-        zend_object_properties_size(class_type));
+        zend_object_properties_size(ce));
 
-    hobj->aff_path = NULL;
-    hobj->dic_path = NULL;
-    hobj->dic = NULL;
-    hobj->aff_path_len = 0;
-    hobj->dic_path_len = 0;
+    intern->dic = NULL;
+    intern->aff_path = NULL;
+    intern->dic_path = NULL;
+    intern->aff_path_len = 0;
+    intern->dic_path_len = 0;
 
-    zend_object_std_init(&hobj->zo, class_type TSRMLS_CC);
+    zend_object_std_init(&intern->zo, ce);
+    object_properties_init(&intern->zo, ce);
 
-    hunspell_handlers.offset = XtOffsetOf(ze_hunspell_object, zo);
-    hunspell_handlers.free_obj = (zend_object_free_obj_t)php_hunspell_object_free_storage;
+    intern->zo.handlers = &hunspell_handlers;
 
-    hobj->zo.handlers = &hunspell_handlers;
-
-    return &hobj->zo;
+    return &intern->zo;
 }
 
-static inline ze_hunspell_object * php_hunspell_object_fetch_object(zend_object *obj) {
+static inline ze_hunspell_object * php_ze_hunspell_object_fetch_object(zend_object *obj) {
     return (ze_hunspell_object *)((char *)obj - XtOffsetOf(ze_hunspell_object, zo));
 }
 
@@ -463,13 +459,15 @@ PHP_MINIT_FUNCTION(hunspell)
   zend_class_entry *hunspell_ce;
   
   INIT_CLASS_ENTRY(ce, "hunspell", hunspell_class_functions);
-  hunspell_ce = zend_register_internal_class(&ce TSRMLS_CC);
-  hunspell_ce->create_object = php_hunspell_object_new;
+  hunspell_ce = zend_register_internal_class(&ce);
+  hunspell_ce->create_object = php_ze_hunspell_object_new;
   
   memcpy(&hunspell_handlers, zend_get_std_object_handlers(),
          sizeof(zend_object_handlers));
   
-  // hunspell_handlers.clone_obj = hunspell_object_clone;
+  hunspell_handlers.offset = XtOffsetOf(ze_hunspell_object, zo);
+  hunspell_handlers.free_obj = (zend_object_free_obj_t)php_hunspell_object_free_storage;
+  hunspell_handlers.clone_obj = NULL;
 
   return SUCCESS;
 }
@@ -492,8 +490,7 @@ PHP_MINFO_FUNCTION(hunspell)
 	php_info_print_table_end();
 
 	/* Remove comments if you have entries in php.ini */
-	DISPLAY_INI_ENTRIES();
-	
+	//DISPLAY_INI_ENTRIES();
 }
 /* }}} */
 
