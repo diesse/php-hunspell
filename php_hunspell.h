@@ -46,8 +46,8 @@ typedef struct _ze_hunspell_object {
     Hunhandle *dic;
     char *aff_path;
     char *dic_path;
-    int aff_path_len;
-    int dic_path_len;
+    size_t aff_path_len;
+    size_t dic_path_len;
     zend_object zo;
 } ze_hunspell_object;
 
